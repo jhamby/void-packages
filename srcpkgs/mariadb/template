@@ -21,7 +21,7 @@ hostmakedepends="bison perl flex pkg-config"
 makedepends="ncurses-devel gnutls-devel libaio-devel boost-devel pam-devel zlib-devel
  pcre2-devel libatomic-devel"
 depends="mariadb-client"
-checkdepends="perl"
+checkdepends="gdb perl"
 short_desc="Fast SQL database server, drop-in replacement for MySQL"
 maintainer="Justin Jagieniak <justin@jagieniak.net>"
 license="GPL-2.0-only"
@@ -37,6 +37,12 @@ make_dirs="/var/lib/mysql 0700 mysql mysql
  /usr/lib/mysql/plugin/auth_pam_tool_dir 0700 mysql root"
 CFLAGS="-UNDEBUG"
 CXXFLAGS="-UNDEBUG"
+
+# For big-endian ppc64, use runtime check instead of assuming POWER8.
+# For ppc64le, we can safely call the POWER8-optimized code directly.
+case "$XBPS_TARGET_MACHINE" in
+	ppc64le*) configure_args+=" -DREQUIRE_POWER8=YES" ;;
+esac
 
 post_patch() {
 	case "$XBPS_TARGET_MACHINE" in

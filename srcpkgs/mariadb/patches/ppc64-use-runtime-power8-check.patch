@@ -1,0 +1,92 @@
+Call the runtime POWER8 feature check before trying to use
+the POWER8-optimized CRC32 implementation, instead of calling
+the POWER8 version directly as my_checksum(). Fixes the
+runtime crashes on G5, POWER7, and other pre-POWER8 CPUs.
+
+If CMake is configured with "-DREQUIRE_POWER8=YES", as the
+template now does for ppc64le, then we keep the default behavior
+of calling the POWER8 implementation directly.
+
+--- a/mysys/crc32/crc32c.cc	2022-02-06 13:36:19.210111554 -0800
++++ b/mysys/crc32/crc32c.cc	2022-02-06 15:31:41.764549654 -0800
+@@ -493,7 +493,7 @@
+ }
+ 
+ #if __linux__
+-static int arch_ppc_probe(void) {
++extern "C" int arch_ppc_probe(void) {
+   arch_ppc_crc32 = 0;
+ 
+ #if defined(__powerpc64__)
+@@ -506,7 +506,7 @@
+ #include <machine/cpu.h>
+ #include <sys/auxv.h>
+ #include <sys/elf_common.h>
+-static int arch_ppc_probe(void) {
++extern "C" int arch_ppc_probe(void) {
+   unsigned long cpufeatures;
+   arch_ppc_crc32 = 0;
+ 
+@@ -518,7 +518,7 @@
+   return arch_ppc_crc32;
+ }
+ #elif defined(_AIX) || defined(__OpenBSD__)
+-static int arch_ppc_probe(void) {
++extern "C" int arch_ppc_probe(void) {
+   arch_ppc_crc32 = 0;
+ 
+ #if defined(__powerpc64__)
+--- a/mysys/CMakeLists.txt	2022-02-07 13:42:54.082860920 -0800
++++ b/mysys/CMakeLists.txt	2022-02-07 14:59:42.663817161 -0800
+@@ -147,10 +147,13 @@
+   SET_SOURCE_FILES_PROPERTIES(crc32/crc32_ppc64.c crc32/crc32c_ppc.c PROPERTIES
+         COMPILE_FLAGS "${COMPILE_FLAGS} -maltivec -mvsx -mpower8-vector -mcrypto -mpower8-vector")
+   ADD_DEFINITIONS(-DHAVE_POWER8 -DHAS_ALTIVEC)
+-ELSE()
+-  SET (MYSYS_SOURCES ${MYSYS_SOURCES} crc32ieee.cc)
++  IF(REQUIRE_POWER8)
++    ADD_DEFINITIONS(-DREQUIRE_POWER8)
++  ENDIF()
+ ENDIF()
+ 
++SET (MYSYS_SOURCES ${MYSYS_SOURCES} crc32ieee.cc)
++
+ IF(UNIX)
+  SET (MYSYS_SOURCES ${MYSYS_SOURCES} my_addr_resolve.c my_setuser.c)
+ ENDIF()
+--- a/mysys/crc32ieee.cc	2022-02-07 13:42:54.086861021 -0800
++++ b/mysys/crc32ieee.cc	2022-02-07 15:02:24.075942136 -0800
+@@ -13,6 +13,8 @@
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1335  USA */
+ 
++/* For ppc64le, we can assume POWER8 and don't need this file. */
++#ifndef REQUIRE_POWER8
+ 
+ #include <my_global.h>
+ #include <my_sys.h>
+@@ -51,11 +53,10 @@
+ 
+ static const my_crc32_t my_checksum_func= init_crc32();
+ 
+-#ifdef __powerpc64__
+-# error "my_checksum() is defined in mysys/crc32/crc32_ppc64.c"
+-#endif
+ extern "C"
+ unsigned int my_checksum(unsigned int crc, const void *data, size_t len)
+ {
+   return my_checksum_func(crc, data, len);
+ }
++
++#endif  /* REQUIRE_POWER8 */
+--- a/mysys/crc32/crc32_ppc64.c	2022-02-07 13:42:54.082860920 -0800
++++ b/mysys/crc32/crc32_ppc64.c	2022-02-07 13:51:11.519451451 -0800
+@@ -1,4 +1,8 @@
++#ifdef REQUIRE_POWER8
+ #define CRC32_FUNCTION my_checksum
++#else
++#define CRC32_FUNCTION crc32_power8
++#endif
+ #define CRC_TABLE
+ #define POWER8_INTRINSICS
+ #include "pcc_crc32_constants.h"
