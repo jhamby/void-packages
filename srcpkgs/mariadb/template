@@ -1,7 +1,7 @@
 # Template file for 'mariadb'
 pkgname=mariadb
-version=10.5.10
-revision=2
+version=10.5.13
+revision=1
 build_style=cmake
 build_helper=qemu
 configure_args="-DBUILD_CONFIG=mysql_release
@@ -27,7 +27,7 @@ maintainer="Justin Jagieniak <justin@jagieniak.net>"
 license="GPL-2.0-only"
 homepage="https://mariadb.com"
 distfiles="http://archive.mariadb.org/$pkgname-$version/source/${pkgname}-${version}.tar.gz"
-checksum=a5ff32f9fcaaf26bf5cba94accc7b246d2d5eb75710d027e40122df6bac0babb
+checksum=16f008c66831130e9263b2601265d566ffc4e890d37bacecd4dcecebfd0d1c58
 lib32disabled=yes
 provides="mysql-${version}_${revision}"
 replaces="mysql>=0"
