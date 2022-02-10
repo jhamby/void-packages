@@ -1,0 +1,21 @@
+--- a/arch/powerpc/platforms/Kconfig.cputype	2020-10-11 14:15:50.000000000 -0700
++++ b/arch/powerpc/platforms/Kconfig.cputype	2020-10-31 11:16:21.188164104 -0700
+@@ -134,6 +134,10 @@
+ 	bool "Cell Broadband Engine"
+ 	depends on PPC_BOOK3S_64 && !CPU_LITTLE_ENDIAN
+ 
++config G5_CPU
++	bool "G5 (PowerPC 970)"
++	depends on PPC_BOOK3S_64 && !CPU_LITTLE_ENDIAN
++
+ config POWER5_CPU
+ 	bool "POWER5"
+ 	depends on PPC_BOOK3S_64 && !CPU_LITTLE_ENDIAN
+@@ -192,6 +196,7 @@
+ 	string
+ 	depends on TARGET_CPU_BOOL
+ 	default "cell" if CELL_CPU
++	default "970" if G5_CPU
+ 	default "power5" if POWER5_CPU
+ 	default "power6" if POWER6_CPU
+ 	default "power7" if POWER7_CPU
