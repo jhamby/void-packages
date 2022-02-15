@@ -1,7 +1,7 @@
 # Template file for 'removed-packages'
 pkgname=removed-packages
 version=0.1
-revision=59
+revision=60
 build_style=meta
 short_desc="Uninstalls packages removed from repository"
 maintainer="Piotr Wójcik <chocimier@tlen.pl>"
@@ -267,6 +267,7 @@ replaces="
  python-crypto<=3.9.7_3
  python-docutils<=0.16_3
  python-enchant<=2.0.0_4
+ python-evdev<=1.2.0_5
  python-gntp<=1.0.3_7
  python-iso8601<=0.1.16_2
  python-jellyfish<=0.6.1_2
@@ -386,3 +387,17 @@ case "$XBPS_TARGET_MACHINE" in
 		"
 		;;
 esac
+
+case "$XBPS_TARGET_MACHINE" in
+	armv6l*) ;;
+	armv7l*) ;;
+	aarch64*)
+		replaces+="
+		 xf86-video-fbturbo<=0.4.0
+		"
+		;;
+esac
+
+if [ "$XBPS_TARGET_MACHINE" = "armv7l" ]; then
+	replaces+=" xf86-video-fbturbo-sunxi<=0.4.0"
+fi
